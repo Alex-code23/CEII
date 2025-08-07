@@ -6,9 +6,9 @@ CEII/
 ├── canvas/
 │   └── dashboards/
 ├── data/
-│   ├── raw/         # Jeux de données bruts (gitignored)
+│   ├── raw/         
 │   │   └── energy/
-│   ├── processed/   # Données prétraitées (gitignored)
+│   ├── processed/   
 │   └── metadata/
 ├── datasets/
 │   └── energy/
