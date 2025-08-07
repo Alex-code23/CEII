@@ -10,12 +10,12 @@ class DataFrameLoader:
         if source is not None:
             self.load(source)
 
-    def load(self, source):
+    def load(self, source, delimeter=','):
         if isinstance(source, pd.DataFrame):
             self.df = source.copy()
         elif isinstance(source, str):
             # lit un CSV par défaut
-            self.df = pd.read_csv(source)
+            self.df = pd.read_csv(source, delimiter=delimeter)
         else:
             raise ValueError("Source must be a pandas DataFrame or a file path string.")
         return self.df
