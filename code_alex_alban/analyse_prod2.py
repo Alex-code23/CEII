@@ -144,7 +144,7 @@ def hourly_heatmap(dfm, filiere, output_dir):
     dfsel['HH'] = dfsel['Datetime'].dt.strftime('%H:%M')
     pivot = dfsel.groupby(['Mois', 'HH']).Puissance_MW.mean().unstack(level=1).fillna(0)
     # convert index to string for plotting
-    plt.figure(figsize=(12,6))
+    plt.figure(figsize=(12,16))
     im = plt.imshow(pivot, aspect='auto')
     plt.title(f'Heatmap puissance moyenne — {filiere} (MWh/interval)')
     plt.xlabel('Heure')
@@ -163,7 +163,7 @@ def correlation_matrix(by_filiere_daily, output_dir):
     # pivot daily production filiere x date
     pivot = by_filiere_daily.pivot(index='Date', columns='Filière', values='Production_MWh').fillna(0)
     corr = pivot.corr()
-    plt.figure(figsize=(8,16))
+    plt.figure(figsize=(8,6))
     plt.imshow(corr, vmin=-1, vmax=1)
     plt.colorbar(label='Correlation')
     plt.xticks(range(len(corr.columns)), corr.columns, rotation=90)
