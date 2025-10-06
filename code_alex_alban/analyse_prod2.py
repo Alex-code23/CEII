@@ -1,27 +1,3 @@
-"""
-analyse_production_electricite.py
-
-Script d'analyse pour un fichier CSV avec la structure demandée :
-Date;Filière;Puissance maximale;00h00;00h30;...;23h30;Nb points d'injection;Energie journaliere (MWh);Qualite
-
-Le script :
-- lit le CSV (séparateur `;`), détecte et met en forme les colonnes horaires
-- transforme les données en format long (horodatées) à la résolution 30 min
-- calcule l'énergie journalière estimée (MWh) à partir des puissances (MW)
-- compare l'estimation à la colonne 'Energie journalière (MWh)' pour contrôle
-- calcule indicateurs : production quotidienne, mensuelle, annuelle par filière,
-  facteur de charge (capacity factor), pics, percentiles, corrélations
-- produit graphiques : séries temporelles, profils horaires moyens, heatmaps,
-  stacked bars de parts par filière, boxplots, anomalies
-- sauvegarde résultats (CSV + PNG)
-
-Usage :
-python analyse_production_electricite.py --input data.csv --output_dir ./outputs
-
-Dépendances : pandas, numpy, matplotlib
-
-"""
-
 import argparse
 import os
 import re
