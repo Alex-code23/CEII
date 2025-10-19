@@ -3,7 +3,7 @@ import io, pandas as pd, matplotlib.pyplot as plt
 from datetime import datetime
 
 CSV_PATH = "data/raw/energy/ODRE_equilibre_France_mensuel_rpt_injection_soutirage.csv"
-OUTPUT = "results"
+OUTPUT = "results/analyse_produ"
 
 # Read into DataFrame
 df = pd.read_csv(CSV_PATH, encoding="utf-8",sep=';')

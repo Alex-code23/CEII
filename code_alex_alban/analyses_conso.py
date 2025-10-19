@@ -31,7 +31,7 @@ import matplotlib.pyplot as plt
 
 # ---------------------- Configuration et helpers ----------------------
 EPCI_DIR = "data/raw/EPCI"            # dossier contenant tes fichiers CSV
-DEFAULT_OUTPUT_DIR = 'result/'
+DEFAULT_OUTPUT_DIR = 'results/analyses_conso/'
 # lecture CSV pandas settings
 CSV_READ_KW = dict(sep=";", quotechar='"', engine="python", encoding="utf-8", low_memory=False)
 LOG_FORMAT = '%(asctime)s %(levelname)s: %(message)s'

@@ -6,7 +6,7 @@ import html
 
 # --- CONFIG ---
 CSV_PATH = "data/raw/energy/CentraleFR.csv"   # ← mets ici le chemin vers ton fichier CSV
-OUTPUT_HTML = "results/centrales_france_map.html"
+OUTPUT_HTML = "results/centrale_carte/centrales_france_map.html"
 # centre et zoom initial (France)
 MAP_CENTER = [46.7, 2.5]
 ZOOM_START = 6

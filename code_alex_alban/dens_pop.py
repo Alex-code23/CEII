@@ -19,7 +19,7 @@ INSEE_COORD_COL = "insee_code"   # nom de la colonne code INSEE dans CSV_COORD
 # Forcer une année particulière (ex. 'p21_pop'), défini POP_COL. Sinon script choisit la plus récente.
 POP_COL = None  # ex: "p21_pop" ou None pour auto-détection
 
-OUTPUT_PNG = "results/heatmap_kde_population.png"
+OUTPUT_PNG = "results/dens_pop/heatmap_kde_population.png"
 
 # Paramètres KDE / rendu
 GRID_SIZE = 200      # résolution de la grille (500x500 -> plus précis mais plus lent)

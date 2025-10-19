@@ -29,7 +29,7 @@ STEP_KM = 1         # pas en km (0.5 pour plus fin)
 DIST_CRS = 2154     # EPSG:2154 (Lambert-93)
 PLOT_DPI = 150
 
-OUTPUT_PNG = "results/courbes_proximite_centrales.png"
+OUTPUT_PNG = "results/proximite_centrale_pop/courbes_proximite_centrales.png"
 OUTPUT_CURVES_CSV = "results/courbes_proximite_centrales.csv"  # optionnel: export des courbes
 
 # ----------------- Fonctions utilitaires -----------------

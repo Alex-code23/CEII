@@ -6,7 +6,7 @@ from shapely.geometry import Point
 import numpy as np
 
 CSV_PATH = "data/raw/energy/CentraleFR.csv"   # chemin vers ton CSV
-OUTPUT_PNG = "results/centrales_france_map.png"
+OUTPUT_PNG = "results/centrale_carte_fixe/centrales_france_map.png"
 
 # --- Lecture du CSV ---
 df = pd.read_csv(CSV_PATH, encoding="utf-8")

@@ -236,5 +236,5 @@ def main(input_path, output_dir):
 
 if __name__ == '__main__':
     CSV_PATH = "data/raw/energy/ODRE_injections_quotidiennes_consolidees_rpt.csv"   # ← mets ici le chemin vers ton fichier CSV
-    OUTPUT = "results/"
+    OUTPUT = "results/analyse_prod2/"
     main(CSV_PATH, OUTPUT)
