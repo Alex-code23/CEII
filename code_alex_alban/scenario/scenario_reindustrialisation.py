@@ -22,7 +22,7 @@ DEMAND_SCENARIOS = {
     },
     "Demande Forte": {
         "reindus_factor": 1.50,  # Réindustrialisation forte (+50%)
-        "electrification_twh": 160, # Électrification des usages rapide
+        "electrification_twh": 160, # Électrification des usages rapide 
         "datacenters_twh": 30,   # Forte implantation de data centers
     }
 }
@@ -242,6 +242,15 @@ def run_scenarios(output_dir):
     if base_total_conso is None:
         return
 
+    # Création des sous-dossiers pour organiser les graphiques
+    dir_evol_mix = os.path.join(output_dir, "evolution_mix_energetique")
+    dir_evol_cout = os.path.join(output_dir, "evolution_couts_investissements")
+    dir_synthese = os.path.join(output_dir, "synthese_comparaison")
+
+    os.makedirs(dir_evol_mix, exist_ok=True)
+    os.makedirs(dir_evol_cout, exist_ok=True)
+    os.makedirs(dir_synthese, exist_ok=True)
+
     results = []
     simulation_horizon_years = 20 # Simuler sur 20 ans
 
@@ -331,7 +340,6 @@ def run_scenarios(output_dir):
                 investissement_total_an_mds = investissement_total_an / 1e9
 
                 # Enregistrement des données de l'année et affichage console
-                print(f"Année {current_year}: Investissement total = {investissement_total_an_mds:.2f} Mds€")
                 year_data = {'Année': current_year, 'Demande_Totale': demande_annee_courante, 'Prod_Base': base_total_conso,
                              'Coût_Moyen_MWh': cout_moyen_mwh, 'Investissement_Annuel_Mds': investissement_total_an_mds}
                 for tech, twh in capacite_operationnelle_twh.items():
@@ -340,8 +348,8 @@ def run_scenarios(output_dir):
 
             # Création du graphique d'évolution pour ce scénario
             df_evolution = pd.DataFrame(evolution_data)
-            create_evolution_plot(scenario_name, df_evolution, base_total_conso, output_dir)
-            create_cost_investment_evolution_plot(scenario_name, df_evolution, output_dir)
+            create_evolution_plot(scenario_name, df_evolution, base_total_conso, dir_evol_mix)
+            create_cost_investment_evolution_plot(scenario_name, df_evolution, dir_evol_cout)
             
             # Calcul de l'investissement total simulé sur la période
             investissement_total_simule_mds = df_evolution['Investissement_Annuel_Mds'].sum()
@@ -407,7 +415,7 @@ def run_scenarios(output_dir):
     ax1.set_title("Investissement Total Cumulé par Scénario (2025-2045)", fontsize=16)
     ax1.set_ylabel("Investissement (Milliards d'€)")
     plt.tight_layout()
-    plt.savefig(os.path.join(output_dir, 'scenario_investissement_total_compare.png'), dpi=150)
+    plt.savefig(os.path.join(dir_synthese, 'synthese_investissement_total.png'), dpi=150)
     plt.close()
 
     # Graphique 2: Coût Annuel via LCOE
@@ -416,7 +424,7 @@ def run_scenarios(output_dir):
     ax2.set_title("Coût Annuel Estimé de la Nouvelle Production (basé sur le LCOE)", fontsize=16)
     ax2.set_ylabel("Coût Annuel Total de la Nouvelle Production (Milliards d'€)")
     plt.tight_layout()
-    plt.savefig(os.path.join(output_dir, 'scenario_cout_annuel_lcoe.png'), dpi=150)
+    plt.savefig(os.path.join(dir_synthese, 'synthese_cout_annuel_lcoe.png'), dpi=150)
     plt.close()
     
     print(f"\nAnalyse et graphiques sauvegardés dans : {output_dir}")

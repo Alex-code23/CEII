@@ -6,9 +6,8 @@ import numpy as np
 
 # Importer les configurations depuis le script des scénarios
 from scenario_reindustrialisation import (
-    REINDUSTRIALISATION_SCENARIOS,
-    PRODUCTION_MIX_SCENARIOS,
-    DEMANDE_ADDITIONNELLE_AUTRES_TWH
+    DEMAND_SCENARIOS,
+    PRODUCTION_MIX_SCENARIOS
 )
 
 def get_baseline_profiles(daily_injections_path):
@@ -79,19 +78,31 @@ def analyze_intermittency(output_dir):
     base_industrial_conso_ratio = 110 / 450 
     base_industrial_conso = base_total_conso * base_industrial_conso_ratio
 
+    # Création du sous-dossier pour les graphiques de profils journaliers
+    dir_profils_journaliers = os.path.join(output_dir, "profils_journaliers")
+    dir_duree = os.path.join(output_dir, "duree_excedent_deficit")
+    dir_synthese = os.path.join(output_dir, "synthese_intermittence")
     os.makedirs(output_dir, exist_ok=True)
+    os.makedirs(dir_profils_journaliers, exist_ok=True)
+    os.makedirs(dir_duree, exist_ok=True)
+    os.makedirs(dir_synthese, exist_ok=True)
     
+    metrics_results = []
     # Boucle sur tous les scénarios
-    for reindus_name, reindus_factor in REINDUSTRIALISATION_SCENARIOS.items():
+    for demand_name, demand_factors in DEMAND_SCENARIOS.items():
+        # Extraire les facteurs du scénario de demande
+        reindus_factor = demand_factors["reindus_factor"]
+        electrification_twh = demand_factors["electrification_twh"]
+        datacenters_twh = demand_factors["datacenters_twh"]
         
+        # Calcul de la nouvelle demande totale en fonction du scénario
         new_industrial_conso = base_industrial_conso * reindus_factor
         conso_hors_industrie = base_total_conso - base_industrial_conso
-        nouvelle_demande_totale_twh = conso_hors_industrie + new_industrial_conso + DEMANDE_ADDITIONNELLE_AUTRES_TWH
+        nouvelle_demande_totale_twh = conso_hors_industrie + new_industrial_conso + electrification_twh + datacenters_twh
         demande_additionnelle_a_combler = nouvelle_demande_totale_twh - base_total_conso
 
         for mix_name, mix_proportions in PRODUCTION_MIX_SCENARIOS.items():
-            
-            scenario_name = f"{reindus_name}_{mix_name}".replace(" ", "_").replace(".", "")
+            scenario_name = f"{demand_name}_{mix_name}".replace(" ", "_").replace(".", "")
             print(f"\nAnalyse du scénario : {scenario_name}")
 
             # Calculer l'énergie additionnelle par technologie pour ce scénario
@@ -121,9 +132,26 @@ def analyze_intermittency(output_dir):
                 new_total_profiles[saison] = new_saison_profile
 
             # Créer les graphiques pour ce scénario
-            create_scenario_plots(scenario_name, new_total_profiles, nouvelle_demande_totale_twh / base_total_conso, baseline_profiles, output_dir)
+            seasonal_metrics = create_scenario_plots(scenario_name, new_total_profiles, nouvelle_demande_totale_twh / base_total_conso, baseline_profiles, dir_profils_journaliers)
+            create_duration_curve_plot(scenario_name, new_total_profiles, nouvelle_demande_totale_twh / base_total_conso, baseline_profiles, dir_duree)
 
-    print(f"\nAnalyse de l'intermittence terminée. Graphiques sauvegardés dans : {output_dir}")
+            # Collecter les métriques pour la synthèse
+            for saison, metrics in seasonal_metrics.items():
+                metrics_results.append({
+                    "Scénario Demande": demand_name,
+                    "Scénario Mix": mix_name,
+                    "Saison": saison,
+                    "Surplus (GWh/j)": metrics['surplus'],
+                    "Déficit (GWh/j)": metrics['deficit'],
+                    "Pic Déficit (GW)": metrics['peak_deficit']
+                })
+
+    # Créer les graphiques de synthèse
+    df_metrics = pd.DataFrame(metrics_results)
+    create_summary_metrics_plots(df_metrics, dir_synthese)
+
+    print(f"\nAnalyse de l'intermittence terminée. Graphiques sauvegardés dans les sous-dossiers de : {output_dir}")
+
 
 def calculate_metrics(demand_profile, production_profile):
     """
@@ -146,7 +174,7 @@ def calculate_metrics(demand_profile, production_profile):
     
     return surplus_energy_gwh, deficit_energy_gwh, max_deficit_power_gw
 
-def create_scenario_plots(scenario_name, new_profiles, demand_scaling_factor, baseline_profiles, output_dir):
+def create_scenario_plots(scenario_name, new_profiles, demand_scaling_factor, baseline_profiles, output_dir, return_metrics=True):
     """
     Crée et sauvegarde les graphiques pour un scénario donné.
     """
@@ -163,6 +191,7 @@ def create_scenario_plots(scenario_name, new_profiles, demand_scaling_factor, ba
         "Bioénergies": "limegreen"
     }
 
+    seasonal_metrics = {}
     fig, axes = plt.subplots(2, 2, figsize=(20, 14), sharey=True)
     fig.suptitle(f'Profil de Production Journalier Type - Scénario: {scenario_name.replace("_", " ")}', fontsize=20, y=0.96)
     axes = axes.flatten()
@@ -179,6 +208,11 @@ def create_scenario_plots(scenario_name, new_profiles, demand_scaling_factor, ba
 
         # Calculer les métriques
         surplus_gwh, deficit_gwh, max_deficit_gw = calculate_metrics(demand_profile_gw, total_production_gw)
+        seasonal_metrics[saison] = {
+            'surplus': surplus_gwh,
+            'deficit': deficit_gwh,
+            'peak_deficit': max_deficit_gw
+        }
 
         # Ordonner les colonnes pour un affichage cohérent du stackplot
         ordered_techs = [tech for tech in tech_colors if tech in production_profiles_gw.columns]
@@ -227,7 +261,86 @@ def create_scenario_plots(scenario_name, new_profiles, demand_scaling_factor, ba
     plot_filename = f"intermittence_{scenario_name}.png"
     plt.savefig(os.path.join(output_dir, plot_filename), dpi=150, bbox_inches='tight')
     plt.close()
-    print(f"  -> Graphique sauvegardé : {plot_filename}")
+    print(f"  -> Profil journalier sauvegardé : {plot_filename}")
+    return seasonal_metrics
+
+def create_duration_curve_plot(scenario_name, new_profiles, demand_scaling_factor, baseline_profiles, output_dir):
+    """
+    Crée un graphique montrant la courbe de durée de la puissance nette (production - demande).
+    """
+    sns.set_theme(style="whitegrid")
+    seasons = ['Hiver', 'Ete', 'Printemps', 'Automne']
+    
+    fig, axes = plt.subplots(2, 2, figsize=(20, 14), sharey=True)
+    fig.suptitle(f'Courbe de Durée de la Puissance Nette - Scénario: {scenario_name.replace("_", " ")}', fontsize=20, y=0.96)
+    axes = axes.flatten()
+
+    for i, saison in enumerate(seasons):
+        ax = axes[i]
+
+        # Profils de demande et de production (en GW)
+        demand_profile_gw = baseline_profiles.loc[saison].sum(axis=1) * demand_scaling_factor / 1000
+        production_profiles_gw = new_profiles[saison] / 1000
+        total_production_gw = production_profiles_gw.sum(axis=1)
+
+        # Calculer les métriques pour les afficher dans le titre
+        surplus_gwh, deficit_gwh, _ = calculate_metrics(demand_profile_gw, total_production_gw)
+
+        # Puissance nette et tri
+        net_power_gw = (total_production_gw - demand_profile_gw).sort_values(ascending=False)
+
+        # Axe X: durée en heures (intervalles de 30 min)
+        duration_hours = np.arange(0, 24, 0.5)
+
+        # Tracer la courbe de durée
+        ax.plot(duration_hours, net_power_gw.values, color='navy', linewidth=2)
+        
+        # Remplir les zones de surplus et de déficit
+        ax.fill_between(duration_hours, net_power_gw.values, 0, where=net_power_gw.values > 0, facecolor='green', alpha=0.4, label='Surplus')
+        ax.fill_between(duration_hours, net_power_gw.values, 0, where=net_power_gw.values < 0, facecolor='red', alpha=0.4, label='Déficit')
+
+        # Ligne de référence à zéro
+        ax.axhline(0, color='black', linestyle='--', linewidth=1)
+
+        # Mise en forme
+        title_text = (f'Saison : {saison}\n'
+                      f'Surplus: {surplus_gwh:.1f} GWh/j | Déficit: {deficit_gwh:.1f} GWh/j\n'
+                      f'TOTAL: {surplus_gwh - deficit_gwh:.1f} GW')
+        ax.set_title(title_text, fontsize=12)
+        ax.set_ylabel('Puissance Nette (Production - Demande) [GW]', fontsize=12)
+        ax.set_xlabel('Durée (heures par jour)', fontsize=12)
+        ax.grid(True, which='both', linestyle='--', linewidth=0.5)
+        ax.set_xlim(0, 24)
+        ax.legend()
+
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+    plot_filename = f"duree_excedent_deficit_{scenario_name}.png"
+    plt.savefig(os.path.join(output_dir, plot_filename), dpi=150, bbox_inches='tight')
+    plt.close()
+    print(f"  -> Courbe de durée sauvegardée : {plot_filename}")
+
+def create_summary_metrics_plots(df_metrics, output_dir):
+    """
+    Crée des graphiques de synthèse pour comparer les métriques d'intermittence entre les scénarios.
+    """
+    metrics_to_plot = {
+        "Déficit (GWh/j)": "Déficit Énergétique Journalier Moyen",
+        "Surplus (GWh/j)": "Surplus Énergétique Journalier Moyen",
+        "Pic Déficit (GW)": "Pic de Puissance de Déficit"
+    }
+
+    for metric, title in metrics_to_plot.items():
+        plt.figure(figsize=(18, 10))
+        g = sns.catplot(data=df_metrics, x="Scénario Demande", y=metric, hue="Scénario Mix", col="Saison",
+                        kind="bar", palette="viridis", height=6, aspect=0.9)
+        g.fig.suptitle(f"Synthèse - {title}", y=1.03, fontsize=16)
+        g.set_axis_labels("Scénario de Demande", f"{metric}")
+        g.set_titles("Saison : {col_name}")
+        g.despine(left=True)
+        plt.tight_layout(rect=[0, 0, 1, 0.97])
+        plt.savefig(os.path.join(output_dir, f"synthese_{metric.replace(' ', '_').replace('/', '')}.png"), dpi=150)
+        plt.close()
+    print("\nGraphiques de synthèse des métriques d'intermittence créés.")
 
 
 if __name__ == '__main__':
