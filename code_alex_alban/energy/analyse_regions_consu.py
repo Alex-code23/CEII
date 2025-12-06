@@ -196,8 +196,8 @@ def plot_gas_electricity_ratio_by_region(df, output_dir):
 
 def main():
     """Main function to run the analysis."""
-    filepath = r'C:\Users\Alexander\Documents\GitHub\CEII\data\raw\energy\ODRE_consommation_quotidienne_brute_regionale.csv'
-    output_dir = r'c:\Users\Alexander\Documents\GitHub\CEII\results\analyse_regions_consu'
+    filepath = r'data\raw\energy\ODRE_consommation_quotidienne_brute_regionale.csv'
+    output_dir = r'results\analyse_regions_consu'
     df = load_and_preprocess_data(filepath)
 
     os.makedirs(output_dir, exist_ok=True)

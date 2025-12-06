@@ -179,10 +179,10 @@ def generate_visualizations(df, output_dir):
 if __name__ == '__main__':
     # --- Configuration ---
     # Chemin vers votre fichier CSV
-    csv_file_path = r'c:\Users\Alexander\Documents\GitHub\CEII\data\raw\energy\Electricitymaps_electricity.csv'
+    csv_file_path = r'data\raw\energy\Electricitymaps_electricity.csv'
     
     # Dossier où seront sauvegardés les graphiques
-    output_plots_directory = r'c:\Users\Alexander\Documents\GitHub\CEII\results\electricitymaps_analysis'
+    output_plots_directory = r'results\electricitymaps_analysis'
 
     # --- Lancement de l'analyse ---
     analyze_electricity_data(csv_file_path, output_plots_directory)

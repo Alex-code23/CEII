@@ -196,10 +196,10 @@ def generate_visualizations(df, output_dir, prod_cols):
 if __name__ == '__main__':
     # --- Configuration ---
     # Chemin vers votre fichier CSV
-    csv_file_path = r'c:\Users\Alexander\Documents\GitHub\CEII\data\raw\energy\ODRE_equilibre_France_mensuel_rpt_injection_soutirage.csv'
+    csv_file_path = r'data\raw\energy\ODRE_equilibre_France_mensuel_rpt_injection_soutirage.csv'
     
     # Dossier où seront sauvegardés les graphiques
-    output_plots_dir = r'c:\Users\Alexander\Documents\GitHub\CEII\results\analyse_equilibre_electrique'
+    output_plots_dir = r'results\analyse_equilibre_electrique'
 
     # --- Lancement de l'analyse ---
     analyze_electricity_balance(csv_file_path, output_plots_dir)

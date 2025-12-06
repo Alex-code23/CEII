@@ -155,8 +155,8 @@ if __name__ == '__main__':
     # Le script est dans 'code_alex_alban/scenario', on remonte de deux niveaux
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     
-    csv_file = r'C:\Users\Alexander\Documents\GitHub\CEII\data\raw\energy\ODRE_equilibre_France_mensuel_rpt_injection_soutirage.csv'
+    csv_file = r'data\raw\energy\ODRE_equilibre_France_mensuel_rpt_injection_soutirage.csv'
     
-    results_folder = r'C:\Users\Alexander\Documents\GitHub\CEII\results\output_analysis_equi_injection_FR'
+    results_folder = r'results\output_analysis_equi_injection_FR'
 
     analyser_equilibre_energetique(csv_file, results_folder)

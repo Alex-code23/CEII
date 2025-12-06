@@ -222,10 +222,10 @@ def generate_visualizations(df_daily, df_long, output_dir):
 if __name__ == '__main__':
     # --- Configuration ---
     # Chemin vers votre fichier CSV
-    csv_file_path = r'c:\Users\Alexander\Documents\GitHub\CEII\data\raw\energy\ODRE_injections_quotidiennes_consolidees_rpt.csv'
+    csv_file_path = r'data\raw\energy\ODRE_injections_quotidiennes_consolidees_rpt.csv'
     
     # Dossier où seront sauvegardés les graphiques
-    output_plots_dir = r'c:\Users\Alexander\Documents\GitHub\CEII\results\analyse_injections_quotidiennes'
+    output_plots_dir = r'results\analyse_injections_quotidiennes'
 
     # --- Lancement de l'analyse ---
     analyze_daily_injections(csv_file_path, output_plots_dir)
