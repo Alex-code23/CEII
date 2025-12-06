@@ -115,7 +115,7 @@ def generate_visualizations(df_daily, df_long, output_dir):
         (seasonal_profile / 1000).plot(ax=axes[i], linewidth=2)
         axes[i].set_title(f'Filière : {source}', fontsize=16)
         axes[i].set_ylabel('Puissance Moyenne (GW)')
-        axes[i].legend(title='Saison', labels=seasons)
+        axes[i].legend(title='Saison')
         axes[i].grid(True, which='both', linestyle='--')
 
     plt.xlabel('Heure de la journée', fontsize=12)
