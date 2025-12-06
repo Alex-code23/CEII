@@ -179,11 +179,6 @@ system_scen2 = InterconnectedGrid(
     interco_scen2
 )
 
-# --- EXÉCUTION ---
-
-# Incident majeur : Perte de 5 GW en France (ex: 3 EPR + 1 autre réacteur, ou une ligne HVDC majeure)
-loss_of_generation_gw = 5.0
-INCIDENT_COUNTRY = "Espagne"
 # --- VISUALISATION ---
 
 def plot_network_topology(system, output_dir):
