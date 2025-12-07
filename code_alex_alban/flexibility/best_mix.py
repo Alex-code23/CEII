@@ -140,68 +140,86 @@ def simulate_and_analyze(production_df, consumption_s, mix):
     
     return total_production, analysis
 
-def plot_results(production_df, consumption_s, simulated_production, analysis, mix_name):
-    """
-    Visualise les résultats de la simulation sur une période d'une semaine.
-    """
-    plt.style.use('seaborn-v0_8-whitegrid')
-    fig, ax = plt.subplots(figsize=(15, 7))
-    
-    # Sélectionner une semaine représentative pour la visualisation (par exemple, la première)
-    start_date = production_df.index.min()
-    end_date = start_date + pd.Timedelta(days=7)
-    
-    # Données pour la période sélectionnée
-    consumption_week = consumption_s[start_date:end_date]
-    production_week = simulated_production[start_date:end_date]
-    
-    # Utiliser un stackplot pour mieux visualiser la composition de la production
-    # L'affichage de la légende est adapté pour montrer les capacités en GW
-    # On s'assure que les filières avec une capacité nulle ne sont pas dans la légende
+def _plot_single_period(ax, start_date, end_date, production_df, consumption_s, simulated_production, analysis, title):
+    """Fonction interne pour tracer une période de temps spécifique (jour ou semaine)."""
+    consumption_period = consumption_s[start_date:end_date]
+    production_period = simulated_production[start_date:end_date]
+
     capacities_to_plot = {filiere: capacity for filiere, capacity in analysis["Mix"].items() if capacity > 0.1}
     if capacities_to_plot:
         labels = [f'{filiere} ({capacity/1000:.1f} GW)' for filiere, capacity in capacities_to_plot.items()]
         productions = [(production_df[filiere] * capacity)[start_date:end_date] for filiere, capacity in capacities_to_plot.items()]
-        ax.stackplot(production_week.index, productions, labels=labels, alpha=0.7)
+        ax.stackplot(production_period.index, productions, labels=labels, alpha=0.7)
 
-    # Tracer la consommation et la production totale
-    ax.plot(consumption_week.index, consumption_week, label='Consommation Estimée', color='black', linewidth=2.5, linestyle='--')
-    ax.plot(production_week.index, production_week, label=f'Production Totale Simulée', color='green', linewidth=2.5)
+    ax.plot(consumption_period.index, consumption_period, label='Consommation', color='black', linewidth=2, linestyle='--')
+    ax.plot(production_period.index, production_period, label='Production ENR', color='green', linewidth=2)
 
-
-    # Mettre en évidence le déficit et le surplus
-    ax.fill_between(production_week.index, production_week, consumption_week, 
-                    where=production_week < consumption_week, 
+    ax.fill_between(production_period.index, production_period, consumption_period,
+                    where=production_period < consumption_period,
                     color='red', alpha=0.3, label='Déficit')
-    ax.fill_between(production_week.index, production_week, consumption_week, 
-                    where=production_week > consumption_week, 
+    ax.fill_between(production_period.index, production_period, consumption_period,
+                    where=production_period > consumption_period,
                     color='blue', alpha=0.3, label='Surplus')
 
-
-    ax.set_title(f'Simulation du Mix Énergétique "{mix_name}" vs Consommation')
+    ax.set_title(title)
     ax.set_ylabel('Puissance (MW)')
-    ax.set_xlabel('Date')
-    ax.legend()
     ax.grid(True)
-    
-    # Formatter l'axe des dates
-    # Formatter l'axe des dates
-    ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
-    plt.xticks(rotation=45)
-    
-    # --- MODIFICATION : Enregistrer le graphique au lieu de juste l'afficher ---
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+    ax.tick_params(axis='x', rotation=45)
+
+def plot_results(production_df, consumption_s, simulated_production, analysis, mix_name):
+    """
+    Visualise les résultats de la simulation sur une année complète et pour des journées types de chaque saison.
+    """
+    plt.style.use('seaborn-v0_8-whitegrid')
+    safe_mix_name = mix_name.replace(" ", "_").lower()
     output_dir = 'results'
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
-    
-    safe_mix_name = mix_name.replace(" ", "_").lower()
-    filename = os.path.join(output_dir, f"simulation_{safe_mix_name}.png")
-    
+
+    # --- Graphique 1 : Vue annuelle ---
+    fig_year, ax_year = plt.subplots(figsize=(18, 8))
+    ax_year.plot(consumption_s.index, consumption_s, label='Consommation', color='black', alpha=0.7, linestyle=':')
+    ax_year.plot(simulated_production.index, simulated_production, label='Production ENR', color='green', alpha=0.8)
+    ax_year.set_title(f'Simulation Annuelle du Mix "{mix_name}"')
+    ax_year.set_ylabel('Puissance (MW)')
+    ax_year.set_xlabel('Date')
+    ax_year.legend()
+    ax_year.grid(True, which='both', linestyle='--')
+    ax_year.xaxis.set_major_formatter(mdates.DateFormatter('%b %Y'))
     plt.tight_layout()
-    plt.savefig(filename, dpi=300)
-    print(f"\nGraphique de simulation enregistré sous : {filename}")
+    filename_year = os.path.join(output_dir, f"simulation_annuelle_{safe_mix_name}.png")
+    plt.savefig(filename_year, dpi=150)
+    print(f"\nGraphique de simulation annuelle enregistré sous : {filename_year}")
+    plt.close(fig_year)
+
+    # --- Graphique 2 : Focus sur 4 journées types (saisons) ---
+    seasonal_dates = {
+        'Hiver': '2022-01-15',
+        'Printemps': '2022-04-15',
+        'Été': '2022-07-15',
+        'Automne': '2022-10-15'
+    }
+
+    fig_seasons, axes = plt.subplots(2, 2, figsize=(18, 12), sharey=True)
+    fig_seasons.suptitle(f'Focus sur des journées types pour le mix "{mix_name}"', fontsize=16)
+    axes = axes.flatten()
+
+    for i, (season, date_str) in enumerate(seasonal_dates.items()):
+        start_date = pd.to_datetime(date_str)
+        end_date = start_date + pd.Timedelta(days=1) - pd.Timedelta(minutes=30)
+        _plot_single_period(axes[i], start_date, end_date, production_df, consumption_s, simulated_production, analysis, f'Journée type - {season}')
+
+    # Ajouter une légende commune
+    handles, labels = axes[0].get_legend_handles_labels()
+    fig_seasons.legend(handles, labels, loc='lower center', ncol=5, bbox_to_anchor=(0.5, -0.02))
+
+    plt.tight_layout()
+    filename_seasons = os.path.join(output_dir, f"simulation_saisons_{safe_mix_name}.png")
+    plt.savefig(filename_seasons, dpi=150, bbox_inches='tight')
+    print(f"Graphique des saisons enregistré sous : {filename_seasons}")
     plt.show()
-    plt.close(fig) # Fermer la figure pour libérer la mémoire
+    plt.close(fig_seasons)
 
 def plot_capacities_summary(analysis_metrics):
     """
@@ -342,7 +360,7 @@ def find_optimal_capacities(production_df, consumption_s):
 # --- Script Principal ---
 if __name__ == "__main__":
     # Chemin vers votre fichier
-    filepath = r'c:\Users\Alexander\Documents\GitHub\CEII\data\raw\energy\ODRE_injections_quotidiennes_consolidees_rpt.csv'
+    filepath = r'data\raw\energy\ODRE_injections_quotidiennes_consolidees_rpt.csv'
     
     # 1. Charger et préparer les données
     production_data = load_and_prepare_data(filepath)
